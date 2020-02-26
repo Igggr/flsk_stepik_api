@@ -32,7 +32,7 @@ class Participant(db.Model):
     location = db.Column(db.String)
     about = db.Column(db.String)
 
-    enrollments = db.relationship("Enrollment", back_populates='participants')
+    enrollments = db.relationship("Enrollment", back_populates='participant')
 
 
 class Enrollment(db.Model):
