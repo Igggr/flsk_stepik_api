@@ -1,16 +1,25 @@
-from flask import jsonify
+from flask import jsonify, request
 from flask.views import MethodView
 from app import app
+from .models import Location, Event
+from .schema import event_schema, location_schema
 
 
 @app.route('/locations/')
 def locations():
-    return jsonify([])
+    return jsonify(location_schema.dump(Location.query))
 
 
 @app.route('/events/')
 def events():
-    return jsonify([])
+    eventtype = request.values.get('eventtype')
+    location = request.values.get('location')
+    events = Event.query
+    if eventtype:
+        events = events.filter_by(type=Event.TypeEnum(eventtype))
+    if location:
+        events = events.filter(Event.location.has(code=location))
+    return jsonify(event_schema.dump(events))
 
 
 class EnrollmentView(MethodView):
