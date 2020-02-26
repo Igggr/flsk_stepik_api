@@ -1,8 +1,8 @@
 from flask import jsonify, request
 from flask.views import MethodView
 from app import app
-from .models import Location, Event
-from .schema import event_schema, location_schema
+from .models import Location, Event, Participant
+from .schema import event_schema, location_schema, participant_schema
 
 
 @app.route('/locations/')
@@ -35,9 +35,22 @@ class EnrollmentView(MethodView):
 app.add_url_rule('/enrollments/id=<int:eventid>', view_func=EnrollmentView.as_view('enrollments'))
 
 
-@app.route('/register/')
+@app.route('/register/', methods=['POST'])
 def register():
-    return jsonify({"status": "ok", "id": 1})
+    name = request.json['name']
+    email = request.json['email']
+    location = request.json['location']
+    about = request.json['about']
+    password = request.json['password']
+    if not name or not email or not location or not about or not password:
+        return jsonify({"status": "error"})
+    if Participant.query.filter_by(email=email).first():
+        return jsonify({"status": "error"})
+    participant = Participant(name=name, email=email, location=location, about=about)
+    participant.password = password
+    participant.save()
+
+    return jsonify(participant_schema.dump(participant))
 
 
 @app.route('/auth/')

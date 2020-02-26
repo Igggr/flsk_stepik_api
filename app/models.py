@@ -4,6 +4,14 @@ import enum
 
 db = SQLAlchemy()
 
+class SaveModelMixin:
+    def save(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+        except:
+            db.session.rollback()
+
 
 class TypeEnum(enum.Enum):
     HACKATON = 1
@@ -11,15 +19,15 @@ class TypeEnum(enum.Enum):
     LECTURE = 3
 
 
-class Event(db.Model):
+class Event(db.Model, SaveModelMixin):
     __tablename__ = 'events'
     uid = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String)
     description = db.Column(db.String)
     date = db.Column(db.Date)
     time = db.Column(db.Time)
-    _type = db.Column(db.String)
-    _category = db.Column(db.String)
+    _type = db.Column(db.Integer)
+    _category = db.Column(db.Integer)
     address = db.Column(db.String)
     seats = db.Column(db.Integer)
 
@@ -42,7 +50,7 @@ class Event(db.Model):
         self._type = type_enum
 
 
-class Participant(db.Model):
+class Participant(db.Model, SaveModelMixin):
     __tablename__ = 'participants'
     uid = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
@@ -69,7 +77,7 @@ class Participant(db.Model):
         return check_password_hash(plaintext, self._password)
 
 
-class Enrollment(db.Model):
+class Enrollment(db.Model, SaveModelMixin):
     __tablename__ = 'enrollments'
     uid = db.Column(db.Integer, primary_key=True)
     datetime = db.Column(db.DateTime)
@@ -81,7 +89,7 @@ class Enrollment(db.Model):
     event = db.relationship(Event, back_populates="enrollments")
 
 
-class Location(db.Model):
+class Location(db.Model, SaveModelMixin):
     __tablename__ = 'locations'
     uid = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String)

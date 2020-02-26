@@ -22,3 +22,14 @@ class LocationSchema(Schema):
 
 
 location_schema = LocationSchema(many=True)
+
+
+class ParticipantSchema(Schema):
+    name = fields.String()
+    email = fields.String()
+    picture = fields.String()
+    location = fields.String()
+    about = fields.String()
+
+
+participant_schema = ParticipantSchema()
