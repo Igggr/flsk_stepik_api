@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 import enum
+import datetime
+
 
 db = SQLAlchemy()
 
@@ -14,9 +16,18 @@ class SaveModelMixin:
 
 
 class TypeEnum(enum.Enum):
+    INSPIRING_BULLSHIT = 0
     HACKATON = 1
     MEETUP = 2
     LECTURE = 3
+
+
+class CategoryEnum(enum.Enum):
+    ML = 0
+    PYTHON = 1
+    DJANGO = 2
+    CPP = 3
+    PROJECT_MANAGMENT = 4
 
 
 class Event(db.Model, SaveModelMixin):
@@ -37,17 +48,26 @@ class Event(db.Model, SaveModelMixin):
     enrollments = db.relationship("Enrollment", back_populates='event')
 
     TypeEnum = TypeEnum
+    CategoryEnum = CategoryEnum
 
     def __str__(self):
         return f"{self.title}"
 
     @property
     def type(self):
-        self._type = type
+        return self.TypeEnum(int(self._type))
 
     @type.setter
     def type(self, type_enum):
-        self._type = type_enum
+        self._type = type_enum.value
+
+    @property
+    def category(self):
+        return self.CategoryEnum(int(self._category))
+
+    @category.setter
+    def category(self, category_enum):
+        self._category = category_enum
 
 
 class Participant(db.Model, SaveModelMixin):
@@ -80,7 +100,7 @@ class Participant(db.Model, SaveModelMixin):
 class Enrollment(db.Model, SaveModelMixin):
     __tablename__ = 'enrollments'
     uid = db.Column(db.Integer, primary_key=True)
-    datetime = db.Column(db.DateTime)
+    datetime = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
     participant_id = db.Column(db.Integer, db.ForeignKey('participants.uid'))
     event_id = db.Column(db.Integer, db.ForeignKey('events.uid'))
