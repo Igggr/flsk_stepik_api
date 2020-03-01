@@ -84,6 +84,9 @@ def auth():
     return jsonify(), 400
 
 
-@app.route('/profile/')
-def profile():
-    return jsonify({"id": 1, "picture": "", "city": "nsk", "about": "", "enrollments": []})
+@app.route('/profile/<int:uid>')
+def profile(uid):
+    user = Participant.query.get(uid)
+    if not user:
+        return jsonify(), 400
+    return jsonify(participant_schema.dump(user))

@@ -30,6 +30,12 @@ class ParticipantSchema(Schema):
     picture = fields.String()
     location = fields.String()
     about = fields.String()
+    enrollments = fields.Nested('EnrollmentSchema', many=True)
 
 
 participant_schema = ParticipantSchema()
+
+
+class EnrollmentSchema(Schema):
+    event_id = fields.Integer()
+    datetime = fields.DateTime()
