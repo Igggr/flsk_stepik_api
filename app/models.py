@@ -55,7 +55,7 @@ class Event(db.Model, SaveModelMixin):
 
     @property
     def type(self):
-        return self.TypeEnum(int(self._type))
+        return self.TypeEnum(self._type)
 
     @type.setter
     def type(self, type_enum):
@@ -63,7 +63,7 @@ class Event(db.Model, SaveModelMixin):
 
     @property
     def category(self):
-        return self.CategoryEnum(int(self._category))
+        return self.CategoryEnum(self._category)
 
     @category.setter
     def category(self, category_enum):
@@ -94,7 +94,7 @@ class Participant(db.Model, SaveModelMixin):
         self._password = generate_password_hash(plaintext)
 
     def check_password(self, plaintext):
-        return check_password_hash(plaintext, self._password)
+        return check_password_hash(self._password, plaintext)
 
 
 class Enrollment(db.Model, SaveModelMixin):
