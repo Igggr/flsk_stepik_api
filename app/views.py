@@ -1,16 +1,20 @@
+from flask import Blueprint
 from flask import jsonify, request
 from flask.views import MethodView
-from app import app
-from .models import Location, Event, Participant, Enrollment
+#from app import db
+from .models import Location, Event, Participant, Enrollment, db
 from .schema import event_schema, location_schema, participant_schema
 
 
-@app.route('/locations/')
+api_blueprint = Blueprint('api_blueprint', __name__)
+
+
+@api_blueprint.route('/locations/')
 def locations():
     return jsonify(location_schema.dump(Location.query)), 200
 
 
-@app.route('/events/')
+@api_blueprint.route('/events/')
 def events():
     eventtype = request.values.get('eventtype')
     location = request.values.get('location')
@@ -24,6 +28,10 @@ def events():
 
 
 class EnrollmentView(MethodView):
+    """task was ambigious. It id impossible to deletee enrollments if we know only event.
+    We must also know user - for which we delete enrollments.
+    I assume, that his email is given in the body of post request"""
+    
     methods = ["POST", "DELETE"]
 
     def post(self, eventid):
@@ -41,18 +49,21 @@ class EnrollmentView(MethodView):
     def delete(self, eventid):
         event = Event.query.get(eventid)
         email = request.json.get('email')
-        participant = Participant.query.filter_by(email=email)
+        participant = Participant.query.filter_by(email=email).first()
+        print(participant)
         if not participant:
             return jsonify({"status": "error"}), 400
-        participant = participant.first()
-        print(participant.enrollments)
+        enrollment = [e for e in participant.enrollments if e.event_id == eventid][0]
+        db.sesion.delete(enrollment)
+        event.seats += 1
+        db.session.commit()
         return jsonify({"status": "success"}), 200
 
 
-app.add_url_rule('/enrollments/id=<int:eventid>', view_func=EnrollmentView.as_view('enrollments'))
+api_blueprint.add_url_rule('/enrollments/id=<int:eventid>', view_func=EnrollmentView.as_view('enrollments'))
 
 
-@app.route('/register/', methods=['POST'])
+@api_blueprint.route('/register/', methods=['POST'])
 def register():
     name = request.json['name']
     email = request.json['email']
@@ -70,7 +81,7 @@ def register():
     return jsonify(participant_schema.dump(participant)), 200
 
 
-@app.route('/auth/', methods=["POST"])
+@api_blueprint.route('/auth/', methods=["POST"])
 def auth():
     email = request.json.get('email')
     password = request.json.get('password')
@@ -84,7 +95,7 @@ def auth():
     return jsonify(), 400
 
 
-@app.route('/profile/<int:uid>')
+@api_blueprint.route('/profile/<int:uid>')
 def profile(uid):
     user = Participant.query.get(uid)
     if not user:
