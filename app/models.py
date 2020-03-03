@@ -28,6 +28,7 @@ class CategoryEnum(enum.Enum):
     DJANGO = 2
     CPP = 3
     PROJECT_MANAGMENT = 4
+    ESOLANG = 4
 
 
 class Event(db.Model, SaveModelMixin):
@@ -36,7 +37,7 @@ class Event(db.Model, SaveModelMixin):
     title = db.Column(db.String)
     description = db.Column(db.String)
     date = db.Column(db.Date)
-    time = db.Column(db.Time)
+    time = db.Column(db.Time, default=datetime.time)
     _type = db.Column(db.Integer)
     _category = db.Column(db.Integer)
     address = db.Column(db.String)

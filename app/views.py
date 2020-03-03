@@ -3,15 +3,18 @@ from flask import jsonify, request
 from flask.views import MethodView
 #from app import db
 from .models import Location, Event, Participant, Enrollment, db
-from .schema import event_schema, location_schema, participant_schema
+from .schema import EventSchema, LocationSchema, ParticipantSchema
 
 
 api_blueprint = Blueprint('api_blueprint', __name__)
 
+locations_schema = LocationSchema(many=True)
+events_schema = EventSchema(many=True)
+participant_schema = ParticipantSchema()
 
 @api_blueprint.route('/locations/')
 def locations():
-    return jsonify(location_schema.dump(Location.query)), 200
+    return jsonify(locations_schema.dump(Location.query)), 200
 
 
 @api_blueprint.route('/events/')
@@ -24,7 +27,7 @@ def events():
         events = events.filter(Event._type==requested_type.value)
     if location:
         events = events.filter(Event.location.has(code=location))
-    return jsonify(event_schema.dump(events)), 200
+    return jsonify(events_schema.dump(events)), 200
 
 
 class EnrollmentView(MethodView):
@@ -34,7 +37,8 @@ class EnrollmentView(MethodView):
     
     methods = ["POST", "DELETE"]
 
-    def post(self, eventid):
+    @staticmethod
+    def post(eventid):
         event = Event.query.get(eventid)
         email = request.json.get('email')
         participant = Participant.query.filter_by(email=email)
@@ -46,15 +50,15 @@ class EnrollmentView(MethodView):
         else:
             return jsonify({"status": "error"}), 400
 
-    def delete(self, eventid):
+    @staticmethod
+    def delete(eventid):
         event = Event.query.get(eventid)
         email = request.json.get('email')
         participant = Participant.query.filter_by(email=email).first()
-        print(participant)
         if not participant:
             return jsonify({"status": "error"}), 400
         enrollment = [e for e in participant.enrollments if e.event_id == eventid][0]
-        db.sesion.delete(enrollment)
+        db.session.delete(enrollment)
         event.seats += 1
         db.session.commit()
         return jsonify({"status": "success"}), 200
@@ -71,8 +75,10 @@ def register():
     about = request.json['about']
     password = request.json['password']
     if not name or not email or not location or not about or not password:
+        print("need more bytes")
         return jsonify({"status": "error"}), 400
     if Participant.query.filter_by(email=email).first():
+        print("exist")
         return jsonify({"status": "error"}), 400
     participant = Participant(name=name, email=email, location=location, about=about)
     participant.password = password
@@ -83,15 +89,19 @@ def register():
 
 @api_blueprint.route('/auth/', methods=["POST"])
 def auth():
+    print(request.get_json())
     email = request.json.get('email')
     password = request.json.get('password')
     if not email or not password:
+        print("недостаточно данных")
         return jsonify(), 400
     user = Participant.query.filter_by(email=email).first()
     if not user:
+        print('not exist')
         return jsonify(), 400
     if user.check_password(password):
         return jsonify(participant_schema.dump(user)), 200
+    print("wrong password")
     return jsonify(), 400
 
 

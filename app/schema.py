@@ -12,16 +12,10 @@ class EventSchema(Schema):
     seats = fields.Integer()
 
 
-event_schema = EventSchema(many=True)
-
-
 class LocationSchema(Schema):
     uid = fields.Integer(dump_only=True)
     title = fields.String()
     code = fields.String()
-
-
-location_schema = LocationSchema(many=True)
 
 
 class ParticipantSchema(Schema):
@@ -31,9 +25,6 @@ class ParticipantSchema(Schema):
     location = fields.String()
     about = fields.String()
     enrollments = fields.Nested('EnrollmentSchema', many=True)
-
-
-participant_schema = ParticipantSchema()
 
 
 class EnrollmentSchema(Schema):
